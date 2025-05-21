@@ -256,10 +256,9 @@ class SudokuGrid:
         """
         # TODO: 
         # Implement the method according to the docstring.
-        # - if `lines` are ill-formatted, raise a ValueError
-        # tip. there are many ways to initialize an array
-        #      the easiest is to start with normal lists:
-        #      https://numpy.org/devdocs/user/basics.creation.html#converting-python-sequences-to-numpy-arrays
+        # tip. formatting numbers should be done via `format`
+        #   https://docs.python.org/3/library/string.html#format-examples
+        #.  https://www.w3schools.com/python/ref_string_format.asp
         raise NotImplementedError("not implemented — remove this line")
 
 
