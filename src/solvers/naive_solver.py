@@ -2,6 +2,7 @@ from src.model.grid import SudokuGrid
 from timeit import default_timer as timer
 
 
+
 class NaiveSudokuSolver:
     """
     A naive sudoku solver inspired by https://www.geeksforgeeks.org/sudoku-backtracking-7/.
@@ -88,7 +89,12 @@ class NaiveSudokuSolver:
         #
         # tip. first you increment the `col`, only when when you reach the end
         #      increment the row and reset col to 0
-        raise NotImplementedError("not implemented — remove this line")
+        if col >= self.solution.size - 1:
+            # koniec wiersza -> następny wiersz, kolumna 0
+            return row + 1, 0
+        else:
+            # kolejna kolumna w tym samym wierszu
+            return row, col + 1
 
     def _is_excluded(self, row: int, col: int, val: int) -> bool:
         """
@@ -117,7 +123,24 @@ class NaiveSudokuSolver:
         #        https://www.w3schools.com/python/numpy/numpy_array_slicing.asp
         # tip 2. use `self.solution.block_index` and `self.solution.block`
         #        to get the block
-        raise NotImplementedError("not implemented — remove this line")
+        size = self.solution.size
+
+        # 1) Sprawdź wiersz
+        if any(self.solution[row, j] == val for j in range(size)):
+            return True
+
+        # 2) Sprawdź kolumnę
+        if any(self.solution[i, col] == val for i in range(size)):
+            return True
+
+        # 3) Sprawdź blok
+        idx = self.solution.block_index(row, col)
+        block_vals = self.solution.block(idx)
+        # block_vals to tablica 2D; iterujemy po wartościach
+        if any(x == val for row_vals in block_vals for x in row_vals):
+            return True
+
+        return False
 
     def _dfs(self, row: int, col: int) -> bool:
         """
@@ -165,4 +188,25 @@ class NaiveSudokuSolver:
         #       - otherwise we reset value of the current cell to 0
         # - if we finish the loop without success, the puzzle is infeasible
         #   so we should return `False`
-        raise NotImplementedError("not implemented — remove this line")
+        size = self.solution.size
+        # Jeśli skończyliśmy przeszukiwać ostatni wiersz, rozwiązano zagadkę
+        if row >= size:
+            return True
+        # Sprawdź limit czasu
+        if self._timeout():
+            raise TimeoutError("Solver time limit exceeded")
+        # Jeśli komórka była zapełniona oryginalnie, pomiń ją
+        if self.puzzle._array[row, col] != 0:
+            nxt_row, nxt_col = self._increment_coordinates(row, col)
+            return self._dfs(nxt_row, nxt_col)
+        # W przeciwnym razie spróbuj wstawić do komórki wszystkie wartości od 1 do size
+        for val in range(1, size + 1):
+            if not self._is_excluded(row, col, val):
+                self.solution[row, col] = val
+                nxt_row, nxt_col = self._increment_coordinates(row, col)
+                if self._dfs(nxt_row, nxt_col):
+                    return True
+                # Cofnij ruch
+                self.solution[row, col] = 0
+        # Jeśli żadna wartość nie działa, to puzzle jest niespełnialny na tej ścieżce
+        return False
