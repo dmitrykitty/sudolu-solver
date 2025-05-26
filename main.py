@@ -16,16 +16,17 @@ def parse_args():
     )
     return p.parse_args()
 
-def load_puzzle(path: str) -> SudokuGrid:
+def load_puzzle(path: str):
     with open(path, 'r') as f:
-        lines = [line.strip() for line in f if line.strip()]
-    return SudokuGrid.from_text(lines)
+        raw_lines = [line.strip() for line in f if line.strip()]
+    grid = SudokuGrid.from_text(raw_lines)
+    return grid, raw_lines
 
 def main():
     args = parse_args()
 
     try:
-        puzzle = load_puzzle(args.puzzle_file)
+        puzzle, raw_lines = load_puzzle(args.puzzle_file)
     except Exception as e:
         print(f"error: nie udało się wczytać puzzle: {e}", file=sys.stderr)
         sys.exit(1)
@@ -35,13 +36,13 @@ def main():
         solution = solver.solve(puzzle, args.timeout)
     except TimeoutError:
         print("timeout")
-        sys.exit(1)
+        sys.exit(2)
 
     if solution is None:
-        print("no solution")
+        puzzle_str = "".join(raw_lines)
+        print(f"INFEASIBLE - puzzle grid:{puzzle_str}")
         sys.exit(1)
 
-    # wbudowane __str__ da ASCII-art
     print(solution)
 
 if __name__ == "__main__":
