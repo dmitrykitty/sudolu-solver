@@ -1,5 +1,6 @@
 [project]
 name = "sudolver"
+description = "A simple backtracking Sudoku solver"
 version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = ["numpy"]
