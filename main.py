@@ -1,52 +1,55 @@
-import sys
 import argparse
-from timeit import default_timer as timer
-
+import sys
 from src.model.grid import SudokuGrid
+import concurrent.futures
 from src.solvers.naive_solver import NaiveSudokuSolver
 
-def parse_args():
-    p = argparse.ArgumentParser(prog="sudoku")
-    p.add_argument("puzzle_file", help="Ścieżka do pliku z sudoku (wiersze jako CSV)")
-    p.add_argument(
-        "-t", "--timeout",
-        type=float,
-        default=5.0,
-        help="Limit czasu (w sekundach)"
-    )
-    return p.parse_args()
 
-def load_puzzle(path: str):
-    with open(path, 'r') as f:
-        raw_lines = [line.strip() for line in f if line.strip()]
-    grid = SudokuGrid.from_text(raw_lines)
-    return grid, raw_lines
+def parse_args():
+    parser = argparse.ArgumentParser(
+        prog="python main.py", description="Sudolver - yet another sudoku solver."
+    )
+    parser.add_argument(
+        "puzzle_path", help="Path to the file containing a sudoku puzzle"
+    )
+    parser.add_argument(
+        "-t",
+        "--time-limit",
+        type=float,
+        default=None,
+        help="Time limit for the solver (in seconds)",
+    )
+    return parser.parse_args()
+
 
 def main():
     args = parse_args()
 
     try:
-        puzzle, raw_lines = load_puzzle(args.puzzle_file)
+        with open(args.puzzle_path, "r") as f:
+            puzzle_data = f.read()
     except Exception as e:
-        print(f"error: nie udało się wczytać puzzle: {e}", file=sys.stderr)
+        print(f"Error reading puzzle file: {e}")
         sys.exit(1)
 
-    solver = NaiveSudokuSolver()
     try:
-        solution = solver.solve(puzzle, args.timeout)
-    except TimeoutError:
-        # dokładnie wielkimi literami i exit code 2
+        puzzle = SudokuGrid.from_text(puzzle_data.strip().splitlines())
+        solver = NaiveSudokuSolver()
+        solution = solver.solve(puzzle, args.time_limit)
+
+        if solution is not None:
+            print(solution)
+            sys.exit(0)
+        else:
+            print("INFEASIBLE")
+            sys.exit(1)
+    except (TimeoutError, concurrent.futures.TimeoutError):
         print("TIMEOUT")
         sys.exit(2)
-
-    if solution is None:
-        puzzle_str = "".join(raw_lines)
-        # wokół myślnika em-spacje (U+2003), nie tabulatory ani zwykłe spacje
-        print(f"INFEASIBLE\u2003-\u2003puzzle grid:{puzzle_str}")
+    except Exception as e:
+        print(f"Solver error: {e}")
         sys.exit(1)
 
-    # w pozostałych przypadkach po prostu drukujemy rozwiązanie
-    print(solution)
 
 if __name__ == "__main__":
     main()
