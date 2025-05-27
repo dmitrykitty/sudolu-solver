@@ -35,14 +35,14 @@ def main():
     try:
         solution = solver.solve(puzzle, args.timeout)
     except TimeoutError:
-        # wymagana dokładnie ta fraza i exit code 2
+        # dokładnie wielkimi literami i exit code 2
         print("TIMEOUT")
         sys.exit(2)
 
     if solution is None:
         puzzle_str = "".join(raw_lines)
-        # używamy tabulatorów przed i po myślniku, żeby CI je złapało
-        print(f"INFEASIBLE\t-\tpuzzle grid:{puzzle_str}")
+        # wokół myślnika em-spacje (U+2003), nie tabulatory ani zwykłe spacje
+        print(f"INFEASIBLE\u2003-\u2003puzzle grid:{puzzle_str}")
         sys.exit(1)
 
     # w pozostałych przypadkach po prostu drukujemy rozwiązanie
